@@ -1,23 +1,34 @@
 // Agit comme le MainController: écoute et redirige vers le bon controller
 import http from 'http';
-import { index as home } from './controllers/home';
-import { index as login } from './controllers/login';
+import { index as homeController } from './controllers/home';
+import { index as loginController } from './controllers/login';
+import { isLoggedIn, logout } from './utils/auth';
+import { getView } from './utils/gettersFile';
 
 const server = http.createServer((req, res) => {
   // Fonction IIFE async pour pouvoir await
   (async () => {
     if (req.url === '/') {
-      await login(req, res);
+      logout(res);
+      await loginController(req, res);
       return;
     }
 
-    if (req.url === '/home') {
-      await home(req, res);
+    if (isLoggedIn(req)) {
+      if (req.url === '/home') {
+        await homeController(req, res);
+        return;
+      };
+      const { success, data } = await getView('404.html');
+      res.writeHead(success ? 404 : 500, { 'Content-Type': 'text/html' });
+      res.end(data);
       return;
     }
 
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end(__dirname);
+    const { success, data } = await getView('401.html');
+    res.writeHead(success ? 401 : 500, { 'Content-Type': 'text/html' });
+    res.end(data);
+    return;
   })();
 });
 

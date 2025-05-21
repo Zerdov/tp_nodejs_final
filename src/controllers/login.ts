@@ -1,6 +1,6 @@
 import http from 'http';
-import { getView } from '../utils/getFile';
-import { checkIdentity } from '../utils/auth';
+import { getView } from '../utils/gettersFile';
+import { checkIdentity, login } from '../utils/auth';
 import { getRequestBody } from '../utils/getRequestBody';
 
 export const index = async (
@@ -23,13 +23,12 @@ export const index = async (
 
       const result = await checkIdentity(username, password);
 
-      if (result.success) {
-        res.writeHead(302, {
-          Location: '/home',
-        });
+      if (result) {
+        login(res);
+        res.writeHead(302, { 'Location': '/home' })
         res.end();
       } else {
-        res.writeHead(401, { 'Content-Type': 'text/html' });
+        res.writeHead(401, { 'content-type': 'text/html' });
         res.end(`
           <h2>Échec de la connexion</h2>
           <p>Nom d'utilisateur ou mot de passe incorrect.</p>

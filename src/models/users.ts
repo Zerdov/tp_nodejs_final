@@ -1,4 +1,4 @@
-import { getFile } from '../utils/getFile';
+import { getFile } from '../utils/gettersFile';
 
 export const getUsers = async () => {
   const { success, data } = await getFile('../../data', 'users.json');

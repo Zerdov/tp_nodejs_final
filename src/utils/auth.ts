@@ -5,51 +5,35 @@ import { parseCookies } from '../utils/cookies';
 export const checkIdentity = async (
   username: string,
   password: string
-): Promise<{ success: boolean, token: string }> => {
+): Promise<boolean> => {
   const user = await getUserByUsername(username);
-  if (user && password === user.password) {
-    const token = generateSimpleToken(username);
-    return { success: true, token };
-  }
-  return { success: false, token: '' };
+  return user && password === user.password;
 };
 
-const generateSimpleToken = (username: string) => {
+const generateSimpleToken = () => {
   const timestamp = Date.now().toString();
   const randomPart = Math.random().toString(36).substring(2);
-  return `${username}-${timestamp}-${randomPart}`;
+  return `${timestamp}-${randomPart}`;
 };
 
-export const isLoggedIn = (req: http.IncomingMessage): boolean =>
-  parseCookies(req).token !== null;
-
-export const getUsernameYouLoggedIn = (req: http.IncomingMessage): string =>
-  parseCookies(req).username;
+export const isLoggedIn = (req: http.IncomingMessage): boolean => {
+  return parseCookies(req).token !== null && parseCookies(req).token !== undefined;
+}
 
 export const login = (
   res: http.ServerResponse<http.IncomingMessage> & { req: http.IncomingMessage },
-  username: string,
-  token: string
 ) => {
-  res.writeHead(302, {
-    Location: '/home',
-    'Set-Cookie': [
-      `token=${token}; HttpOnly; Path=/; Max-Age=3600`,
-      `username=${username}; Path=/; Max-Age=3600`
-    ]
-  });
-  res.end();
+  res.setHeader('Set-Cookie', [
+    `token=${encodeURIComponent(generateSimpleToken())}; HttpOnly; Path=/; Max-Age=3600; SameSite=Strict`,
+    // `username=${encodeURIComponent(username)}; Path=/; Max-Age=3600; SameSite=Strict`
+  ]);
 };
 
 export const logout = (
   res: http.ServerResponse<http.IncomingMessage> & { req: http.IncomingMessage }
 ) => {
-  res.writeHead(302, {
-    Location: '/',
-    'Set-Cookie': [
-      'token=; HttpOnly; Path=/; Max-Age=0',
-      'username=; Path=/; Max-Age=0'
-    ]
-  });
-  res.end();
+  res.setHeader('Set-Cookie', [
+    'token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict',
+    'username=; Path=/; Max-Age=0; SameSite=Strict'
+  ]);
 };

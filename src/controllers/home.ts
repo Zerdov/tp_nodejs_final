@@ -1,16 +1,14 @@
 import http from 'http';
-import { isLoggedIn } from '../utils/auth';
+import { getView } from '../utils/gettersFile';
 
-export const index = (req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage> & {
+export const index = async (req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage> & {
   req: http.IncomingMessage;
 }) => { 
   if (req.method === 'GET') {
-    if (isLoggedIn(req)) {
-      res.writeHead(200, { 'Content-Type': 'text' });
-      res.end('Bienvenue');
-    } else {
-      res.writeHead(302, { Location: '/' })
-    }
+    const { success, data } = await getView('home.html');
+    res.writeHead(success ? 200 : 500, { 'Content-Type': 'text/html' });
+    res.end(data);
+    return;
   } else {
     res.writeHead(200, { 'Content-Type': 'text' });
     res.end('POST METHOD');
