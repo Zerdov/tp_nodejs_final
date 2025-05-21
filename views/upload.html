@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Uploader un fichier</title>
+</head>
+
+<body>
+  <h1>Uploader un fichier via WebSocket</h1>
+
+  <input
+    type="file"
+    id="fileInput"
+  >
+  <button id="sendBtn">Envoyer</button>
+  <p id="status"></p>
+
+  <h2>Fichiers disponibles :</h2>
+  <ul id="fileList"></ul>
+
+  <script>
+    const ws = new WebSocket( "ws://localhost:3000" );
+
+    ws.onopen = () =>
+    {
+      console.log( "Connecté au WebSocket" );
+      // Demande la liste des fichiers à l'ouverture
+      ws.send( JSON.stringify( { type: "list" } ) );
+    };
+
+    ws.onmessage = ( event ) =>
+    {
+      const data = JSON.parse( event.data );
+
+      if ( data.type === "list" && Array.isArray( data.files ) )
+      {
+        updateFileList( data.files );
+      } else if ( data.type === "status" )
+      {
+        document.getElementById( "status" ).textContent = data.message;
+        if ( data.success )
+        {
+          // Redemande la liste des fichiers après un upload réussi
+          ws.send( JSON.stringify( { type: "list" } ) );
+        }
+      }
+    };
+
+    document.getElementById( "sendBtn" ).onclick = () =>
+    {
+      const fileInput = document.getElementById( "fileInput" );
+      if ( !fileInput.files.length ) return alert( "Sélectionne un fichier" );
+
+      const file = fileInput.files[ 0 ];
+      const reader = new FileReader();
+
+      reader.onload = () =>
+      {
+        ws.send( JSON.stringify( {
+          type: "upload",
+          filename: file.name,
+          fileData: reader.result
+        } ) );
+      };
+
+      reader.readAsDataURL( file );
+    };
+
+    function updateFileList ( files )
+    {
+      const fileList = document.getElementById( "fileList" );
+      fileList.innerHTML = "";
+
+      files.forEach( file =>
+      {
+        const li = document.createElement( "li" );
+
+        // Nom du fichier
+        const span = document.createElement( "span" );
+        span.textContent = file;
+
+        // Bouton de suppression
+        const deleteBtn = document.createElement( "button" );
+        deleteBtn.textContent = "Supprimer";
+        deleteBtn.style.marginLeft = "10px";
+        deleteBtn.onclick = () =>
+        {
+          ws.send( JSON.stringify( {
+            type: "delete",
+            filename: file
+          } ) );
+        };
+
+        li.appendChild( span );
+        li.appendChild( deleteBtn );
+        fileList.appendChild( li );
+      } );
+    }
+  </script>
+</body>
+
+</html>
