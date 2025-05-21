@@ -1,22 +1,26 @@
 // Agit comme le MainController: écoute et redirige vers le bon controller
 import http from 'http';
 import { index as home } from './controllers/home';
+import { index as login } from './controllers/login';
 
 const server = http.createServer((req, res) => {
-  if (req.url === '/') {
-    res.writeHead(200, { 'Content-Type': 'text' });
-    res.end('Log in');
-    return;
-  };
-  if (req.url === '/home') {
-    home(req, res);
-    return;
-  };
-  res.writeHead(404, { 'Content-Type': 'text' });
-  res.end('Not found');
-  return;
+  // Fonction IIFE async pour pouvoir await
+  (async () => {
+    if (req.url === '/') {
+      await login(req, res);
+      return;
+    }
+
+    if (req.url === '/home') {
+      await home(req, res);
+      return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end(__dirname);
+  })();
 });
 
 server.listen(3000, () => {
-  console.log('Serveur démarré sur http://localhost:3000');
+  console.log('Server started: http://localhost:3000');
 });
