@@ -1,0 +1,16 @@
+[
+  {
+    "id": "abc123",
+    "owner": "user-001",
+    "path": "/user-001/index.md",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "xyz456",
+    "owner": "user-001",
+    "path": "/user-001/shared",
+    "type": "folder",
+    "sharedWith": ["user-002"]
+  }
+]
