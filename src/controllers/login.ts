@@ -16,11 +16,7 @@ export const index = async (
 
   if (req.method === 'POST') {
     try {
-      const body = await getRequestBody(req);
-      const params = new URLSearchParams(body);
-      const username = params.get('username') || '';
-      const password = params.get('password') || '';
-
+      const { username, password } = await getRequestBody(req);
       const result = await checkIdentity(username, password);
 
       if (result) {

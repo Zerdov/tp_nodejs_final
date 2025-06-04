@@ -1,12 +1,12 @@
-// Agit comme le MainController: écoute et redirige vers le bon controller
 import http from 'http';
 import { index as homeController } from './controllers/home';
 import { index as loginController } from './controllers/login';
+import { index as fileController } from './controllers/file';
 import { isLoggedIn, logout } from './utils/auth';
 import { getView } from './utils/getFile';
+import { setupWebSocketServer } from './ws/server'; // importe ton setup WS
 
 const server = http.createServer((req, res) => {
-  // Fonction IIFE async pour pouvoir await
   (async () => {
     if (req.url === '/') {
       logout(res);
@@ -18,7 +18,11 @@ const server = http.createServer((req, res) => {
       if (req.url === '/home') {
         await homeController(req, res);
         return;
-      };
+      }
+      if (req.url?.startsWith('/file')) {
+        await fileController(req, res);
+        return;
+      }
       const { success, data } = await getView('404.html');
       res.writeHead(success ? 404 : 500, { 'Content-Type': 'text/html' });
       res.end(data);
@@ -31,6 +35,9 @@ const server = http.createServer((req, res) => {
     return;
   })();
 });
+
+// Crée ton serveur WebSocket en lui passant le serveur HTTP
+setupWebSocketServer(server);
 
 server.listen(3000, () => {
   console.log('Server started: http://localhost:3000');

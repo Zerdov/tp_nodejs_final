@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs/promises';
-import { readFile } from 'fs/promises';
 
 export const getFile = async (
   folder: string,

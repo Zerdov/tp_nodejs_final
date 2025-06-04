@@ -13,7 +13,7 @@
           <div class="card shadow-sm">
             <div class="card-body">
               <h3 class="card-title text-center mb-4">Login</h3>
-              <form method="POST" action="/">
+              <form id="login-form">
                 <div class="mb-3">
                   <label for="username" class="form-label">Username</label>
                   <input type="text" class="form-control" id="username" name="username" required />
@@ -31,6 +31,30 @@
         </div>
       </div>
     </div>
+    <script>
+      const form = document.getElementById('login-form');
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const username = form.username.value;
+        const password = form.password.value;
+
+        const res = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (res.redirected) {
+          window.location.href = res.url;
+        } else if (res.status === 401) {
+          alert("Nom d'utilisateur ou mot de passe incorrect.");
+        } else {
+          alert("Erreur inattendue.");
+        }
+      };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
   </body>
 </html>
