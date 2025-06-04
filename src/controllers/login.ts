@@ -24,7 +24,7 @@ export const index = async (
       const result = await checkIdentity(username, password);
 
       if (result) {
-        login(res);
+        login(res, username);
         res.writeHead(302, { 'Location': '/home' })
         res.end();
       } else {
