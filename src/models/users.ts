@@ -1,4 +1,4 @@
-import { getFile } from '../utils/gettersFile';
+import { getFile } from '../utils/getFile';
 
 export type User = {
   id: string,

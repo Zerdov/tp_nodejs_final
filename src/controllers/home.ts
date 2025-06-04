@@ -1,5 +1,5 @@
 import http from 'http';
-import { getView } from '../utils/gettersFile';
+import { getView } from '../utils/getFile';
 
 export const index = async (req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage> & {
   req: http.IncomingMessage;

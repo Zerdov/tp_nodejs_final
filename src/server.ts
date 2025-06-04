@@ -3,7 +3,7 @@ import http from 'http';
 import { index as homeController } from './controllers/home';
 import { index as loginController } from './controllers/login';
 import { isLoggedIn, logout } from './utils/auth';
-import { getView } from './utils/gettersFile';
+import { getView } from './utils/getFile';
 
 const server = http.createServer((req, res) => {
   // Fonction IIFE async pour pouvoir await

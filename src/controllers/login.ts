@@ -1,5 +1,5 @@
 import http from 'http';
-import { getView } from '../utils/gettersFile';
+import { getView } from '../utils/getFile';
 import { checkIdentity, login } from '../utils/auth';
 import { getRequestBody } from '../utils/getRequestBody';
 
