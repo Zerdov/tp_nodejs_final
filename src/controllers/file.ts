@@ -78,8 +78,10 @@ export const create = async (
     await writeFilesJson(createFile(files, fileObj));
     await notifyUsersForPath(fileObj.path, {
       type: 'file-created',
-      file: fileObj,
-      by: user.id
+      by: user.id,
+      fileId: fileObj.id,
+      filePath: fileObj.path,
+      file: fileObj
     });
 
     res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -164,9 +166,10 @@ export const update = async (
       await writeFilesJson(updateFile(files, file.id, file));
       await notifyUsersForPath(file.path, {
         type: 'file-renamed',
+        by: user.id,
         fileId: file.id,
-        newPath: file.path,
-        by: user.id
+        filePath: file.path,
+        newPath: file.path
       });
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -232,9 +235,9 @@ export const deleteFileHandler = async (
       await writeFilesJson(deleteFile(files, fileId));
       await notifyUsersForPath(file.path, {
         type: 'file-deleted',
+        by: user.id,
         fileId: file.id,
-        filePath: file.path,
-        by: user.id
+        filePath: file.path
       });
 
       res.writeHead(204);
@@ -303,13 +306,12 @@ export const share = async (
 
   await writeFilesJson(files);
 
-  for (const targetId of userIds) {
-    notifyUsersForPath(targetId, {
-      type: 'file-shared',
-      by: user.username,
-      file: file.path
-    });
-  }
+  notifyUsersForPath(file.path, {
+    type: 'file-shared',
+    by: user.id,
+    fileId: file.id,
+    filePath: file.path
+  });
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ success: true }));

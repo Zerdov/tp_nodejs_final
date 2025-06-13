@@ -187,21 +187,27 @@
           return;
         }
 
-        switch (data.type) {
+        const { type, by, fileId, filePath, file, newPath } = data;
+
+        switch (type) {
           case 'file-created':
-            alert(`Fichier créé par ${data.by} : ${data.file}`);
+            alert(`📄 Nouveau fichier créé par ${by} : ${filePath}`);
             break;
+
           case 'file-renamed':
-            alert(`Fichier renommé par ${data.by} : ${data.fileId} → ${data.newPath}`);
+            alert(`✏️ Fichier renommé par ${by} : ${file?.path || filePath} → ${newPath}`);
             break;
+
           case 'file-deleted':
-            alert(`Fichier supprimé par ${data.by} : ${data.fileId}`);
+            alert(`🗑️ Fichier supprimé par ${by} : ${filePath}`);
             break;
+
           case 'file-shared':
-            alert(`Fichier partagé par ${data.by} : ${data.fileId}`);
+            alert(`🔗 Fichier partagé par ${by} : ${filePath}`);
             break;
+
           default:
-            console.log('Type de message WebSocket inconnu :', data.type);
+            console.log('Type de message WebSocket inconnu :', type);
         }
 
         refreshList();
