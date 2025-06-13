@@ -109,6 +109,38 @@
         const actions = document.createElement( 'div' );
         actions.className = 'd-flex';
 
+        if (f.type === 'folder') {
+          const downloadBtn = document.createElement('button');
+          downloadBtn.className = 'btn btn-sm btn-outline-success me-2';
+          downloadBtn.textContent = 'Télécharger';
+          downloadBtn.onclick = () => {
+            fetch('http://localhost:3000/folder/download', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ folderId: f.id }),
+            })
+            .then(async res => {
+              if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`HTTP ${res.status} - ${text}`);
+              }
+              return res.blob();
+            })
+            .then(blob => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'trses.zip';
+              a.click();
+              URL.revokeObjectURL(url);
+            })
+            .catch(err => {
+              console.error('Erreur téléchargement:', err);
+            });
+          };
+          actions.appendChild(downloadBtn);
+        }
+
         // Bouton Partager
         const shareBtn = document.createElement( 'button' );
         shareBtn.className = 'btn btn-sm btn-outline-primary me-2';

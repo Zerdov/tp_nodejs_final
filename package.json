@@ -13,12 +13,14 @@
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",
   "devDependencies": {
+    "@types/archiver": "^6.0.3",
     "@types/node": "^22.15.17",
     "@types/ws": "^8.18.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "ws": "^8.18.2"
   }
 }
