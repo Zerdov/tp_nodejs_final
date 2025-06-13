@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,32 +9,24 @@
       rel="stylesheet"
       crossorigin="anonymous"
     />
-    <style>
-      .rename-input {
-        width: auto;
-        display: inline-block;
-        margin-right: 8px;
-      }
-      .file-actions button {
-        margin-left: 8px;
-      }
-    </style>
   </head>
   <body class="bg-light">
-    <div class="container mt-5">
-      <h1 class="text-center text-primary text-xl">Welcome</h1>
-      <a href="/" class="btn btn-danger mb-4">Logout</a>
+    <div class="container py-5">
+      <h1 class="text-center text-primary mb-4">Bienvenue</h1>
+      <div class="d-flex justify-content-end">
+        <a href="/" class="btn btn-outline-danger">Se déconnecter</a>
+      </div>
 
-      <h2>Uploader un fichier</h2>
-      <form id="createForm" class="mt-4">
+      <h2 class="mt-5">Uploader un fichier</h2>
+      <form id="createForm" class="mt-3">
         <div class="mb-3">
           <input type="file" name="file" class="form-control" required />
         </div>
-        <button type="submit" class="btn btn-primary">Uploader un fichier</button>
+        <button type="submit" class="btn btn-primary">Uploader</button>
       </form>
 
       <h2 class="mt-5">Vos fichiers accessibles</h2>
-      <ul id="fileList" class="list-group"></ul>
+      <ul id="fileList" class="list-group mt-3"></ul>
     </div>
 
     <script>
@@ -52,49 +44,46 @@
 
         files.forEach(f => {
           const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          li.className = 'list-group-item d-flex justify-content-between align-items-center flex-wrap';
 
           const infoSpan = document.createElement('span');
+          infoSpan.className = 'me-3 mb-2 mb-md-0';
           infoSpan.textContent = `${f.type.toUpperCase()} - ${f.path}`;
           li.appendChild(infoSpan);
 
-          // Container actions (rename, delete)
           const actions = document.createElement('div');
-          actions.className = 'file-actions';
+          actions.className = 'd-flex';
 
-          // Rename button
           const renameBtn = document.createElement('button');
-          renameBtn.className = 'btn btn-sm btn-secondary';
+          renameBtn.className = 'btn btn-sm btn-outline-secondary me-2';
           renameBtn.textContent = 'Renommer';
           actions.appendChild(renameBtn);
 
-          // Delete button
           const deleteBtn = document.createElement('button');
-          deleteBtn.className = 'btn btn-sm btn-danger';
+          deleteBtn.className = 'btn btn-sm btn-outline-danger';
           deleteBtn.textContent = 'Supprimer';
           actions.appendChild(deleteBtn);
 
           li.appendChild(actions);
           list.appendChild(li);
 
-          // Rename logic
           renameBtn.onclick = () => {
-            // Remplacer le texte par un input et un bouton valider
-            infoSpan.style.display = 'none';
-            renameBtn.style.display = 'none';
-            deleteBtn.style.display = 'none';
+            infoSpan.classList.add('d-none');
+            renameBtn.classList.add('d-none');
+            deleteBtn.classList.add('d-none');
 
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = f.path.split('/').pop(); // nom fichier actuel
-            input.className = 'rename-input form-control form-control-sm d-inline';
+            input.value = f.path.split('/').pop();
+            input.className = 'form-control form-control-sm me-2 mb-2 mb-md-0';
+            input.style.maxWidth = '200px';
 
             const saveBtn = document.createElement('button');
-            saveBtn.className = 'btn btn-sm btn-success';
+            saveBtn.className = 'btn btn-sm btn-success me-2 mb-2 mb-md-0';
             saveBtn.textContent = 'Valider';
 
             const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'btn btn-sm btn-outline-secondary ms-2';
+            cancelBtn.className = 'btn btn-sm btn-outline-secondary mb-2 mb-md-0';
             cancelBtn.textContent = 'Annuler';
 
             li.insertBefore(input, actions);
@@ -127,16 +116,14 @@
               input.remove();
               saveBtn.remove();
               cancelBtn.remove();
-              infoSpan.style.display = '';
-              renameBtn.style.display = '';
-              deleteBtn.style.display = '';
+              infoSpan.classList.remove('d-none');
+              renameBtn.classList.remove('d-none');
+              deleteBtn.classList.remove('d-none');
             };
           };
 
-          // Delete logic
           deleteBtn.onclick = async () => {
             if (!confirm(`Supprimer définitivement "${f.path.split('/').pop()}" ?`)) return;
-
             try {
               const res = await fetch('/files', {
                 method: 'DELETE',
@@ -157,14 +144,11 @@
 
       form.onsubmit = async (e) => {
         e.preventDefault();
-
         const formData = new FormData(form);
-
         const res = await fetch('/file/create', {
           method: 'POST',
           body: formData
         });
-
         if (res.ok) {
           form.reset();
           refreshList();
@@ -173,55 +157,36 @@
         }
       };
 
-      // --- WebSocket pour notifications temps réel ---
       const ws = new WebSocket('ws://localhost:3000');
-
-      ws.onopen = () => {
-        console.log('WebSocket connecté');
-      };
-
+      ws.onopen = () => console.log('WebSocket connecté');
       ws.onmessage = (event) => {
         let data;
         try {
           data = JSON.parse(event.data);
-        } catch (e) {
+        } catch {
           console.warn('Message WebSocket invalide :', event.data);
           return;
         }
 
         switch (data.type) {
           case 'file-created':
-            alert(`Fichier créé par ${data.by} :`, data.file);
-            refreshList();
+            alert(`Fichier créé par ${data.by} : ${data.file}`);
             break;
-
           case 'file-renamed':
-            alert(`Fichier renommé par ${data.by} :`, data.fileId, '→', data.newPath);
-            refreshList();
+            alert(`Fichier renommé par ${data.by} : ${data.fileId} → ${data.newPath}`);
             break;
-
           case 'file-deleted':
-            alert(`Fichier supprimé par ${data.by} :`, data.fileId);
-            refreshList();
+            alert(`Fichier supprimé par ${data.by} : ${data.fileId}`);
             break;
-
           default:
             console.log('Type de message WebSocket inconnu :', data.type);
         }
 
-        // Dans tous les cas, tu peux rafraîchir la liste si tu veux garder les choses simples :
         refreshList();
       };
+      ws.onclose = () => console.log('WebSocket déconnecté');
+      ws.onerror = (err) => console.error('Erreur WebSocket:', err);
 
-      ws.onclose = () => {
-        console.log('WebSocket déconnecté');
-      };
-
-      ws.onerror = (err) => {
-        console.error('Erreur WebSocket:', err);
-      };
-
-      // Rafraîchir la liste au chargement initial
       refreshList();
     </script>
 
