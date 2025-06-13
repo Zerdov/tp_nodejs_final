@@ -28,5 +28,19 @@
     "path": "/user-001/gitlab.svg",
     "type": "file",
     "sharedWith": []
+  },
+  {
+    "id": "prjf79x767b",
+    "owner": "user-002",
+    "path": "/user-002/trses",
+    "type": "folder",
+    "sharedWith": []
+  },
+  {
+    "id": "g8b4trq73n",
+    "owner": "user-002",
+    "path": "/user-002/test23",
+    "type": "folder",
+    "sharedWith": []
   }
 ]

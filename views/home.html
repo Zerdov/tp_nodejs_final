@@ -1,302 +1,473 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Home</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      crossorigin="anonymous"
-    />
-  </head>
-  <body class="bg-light">
-    <div class="container py-5">
-      <h1 class="text-center text-primary mb-4">Bienvenue</h1>
-      <div class="d-flex justify-content-end">
-        <a href="/" class="btn btn-outline-danger">Se déconnecter</a>
-      </div>
 
-      <h2 class="mt-5">Uploader un fichier</h2>
-      <form id="createForm" class="mt-3">
-        <div class="mb-3">
-          <input type="file" name="file" class="form-control" required />
-        </div>
-        <button type="submit" class="btn btn-primary">Uploader</button>
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>Home</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+</head>
+
+<body class="bg-light">
+  <div class="container py-5">
+    <h1 class="text-center text-primary mb-4">Bienvenue</h1>
+    <div class="d-flex justify-content-end">
+      <a
+        href="/"
+        class="btn btn-outline-danger"
+      >Se déconnecter</a>
+    </div>
+    <div>
+      <h2>Créer un dossier</h2>
+      <form id="createFolder">
+        <input
+          type="text"
+          id="folderName"
+          class="form-control"
+          placeholder="Nom du dossier"
+        />
+        <button
+          type="submit"
+          class="btn btn-primary"
+        >Créer</button>
       </form>
-
-      <h2 class="mt-5">Vos fichiers accessibles</h2>
-      <ul id="fileList" class="list-group mt-3"></ul>
+      <p
+        id="folderError"
+        style="color: red; display: none;"
+      ></p>
     </div>
 
-    <script>
-      const list = document.getElementById('fileList');
-      const form = document.getElementById('createForm');
-      let currentFileId = null;
+    <h2 class="mt-5">Uploader un fichier</h2>
+    <form
+      id="createForm"
+      class="mt-3"
+    >
+      <div class="mb-3">
+        <input
+          type="file"
+          name="file"
+          class="form-control"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        class="btn btn-primary"
+      >Uploader</button>
+    </form>
 
-      async function refreshList() {
-        const res = await fetch('/files');
-        if (!res.ok) {
-          list.innerHTML = '<li class="list-group-item text-danger">Erreur chargement fichiers</li>';
-          return;
-        }
-        const files = await res.json();
-        list.innerHTML = '';
+    <h2 class="mt-5">Vos fichiers accessibles</h2>
+    <ul
+      id="fileList"
+      class="list-group mt-3"
+    ></ul>
+  </div>
 
-        files.forEach(f => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center flex-wrap';
+  <script>
+    const list = document.getElementById( 'fileList' );
+    const form = document.getElementById( 'createForm' );
 
-          const infoSpan = document.createElement('span');
-          infoSpan.className = 'me-3 mb-2 mb-md-0';
-          infoSpan.textContent = `${f.type.toUpperCase()} - ${f.path}`;
-          li.appendChild(infoSpan);
+    async function refreshList ()
+    {
+      const res = await fetch( '/file' );
+      if ( !res.ok )
+      {
+        list.innerHTML = '<li class="list-group-item text-danger">Erreur chargement fichiers</li>';
+        return;
+      }
+      const files = await res.json();
+      list.innerHTML = '';
 
-          const actions = document.createElement('div');
-          actions.className = 'd-flex';
+      files.forEach( f =>
+      {
+        const li = document.createElement( 'li' );
+        li.className = 'list-group-item d-flex justify-content-between align-items-center flex-wrap';
 
-          const renameBtn = document.createElement('button');
-          renameBtn.className = 'btn btn-sm btn-outline-secondary me-2';
-          renameBtn.textContent = 'Renommer';
-          actions.appendChild(renameBtn);
+        const shareBtn = document.createElement( 'button' );
+        shareBtn.className = 'btn btn-sm btn-outline-primary me-2';
+        shareBtn.textContent = 'Partager';
+        shareBtn.setAttribute( 'data-bs-toggle', 'modal' );
+        shareBtn.setAttribute( 'data-bs-target', '#shareModal' );
+        actions.appendChild( shareBtn );
 
-          const shareBtn = document.createElement('button');
-          shareBtn.className = 'btn btn-sm btn-outline-primary me-2';
-          shareBtn.textContent = 'Partager';
-          shareBtn.setAttribute('data-bs-toggle', 'modal');
-          shareBtn.setAttribute('data-bs-target', '#shareModal');
-          actions.appendChild(shareBtn);
+        shareBtn.onclick = async () =>
+        {
+          currentFileId = f.id;
+          document.getElementById( 'shareFileName' ).textContent = `Fichier : ${ f.path }`;
 
-          shareBtn.onclick = async () => {
-            currentFileId = f.id;
-            document.getElementById('shareFileName').textContent = `Fichier : ${f.path}`;
+          // Appelle la fonction en passant l'id du fichier
+          await populateUserSelect( currentFileId );
 
-            // Appelle la fonction en passant l'id du fichier
-            await populateUserSelect(currentFileId);
+          // Puis ouvrir la modale via Bootstrap
+          bootstrap.Modal.getOrCreateInstance( document.getElementById( 'shareModal' ) ).show();
+        };
 
-            // Puis ouvrir la modale via Bootstrap
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('shareModal')).show();
-          };
+        const deleteBtn = document.createElement( 'button' );
+        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+        deleteBtn.textContent = 'Supprimer';
+        actions.appendChild( deleteBtn );
+        const infoSpan = document.createElement( 'span' );
+        infoSpan.className = 'me-3 mb-2 mb-md-0';
+        infoSpan.textContent = `${ f.type.toUpperCase() } - ${ f.path }`;
+        li.appendChild( infoSpan );
 
-          const deleteBtn = document.createElement('button');
-          deleteBtn.className = 'btn btn-sm btn-outline-danger';
-          deleteBtn.textContent = 'Supprimer';
-          actions.appendChild(deleteBtn);
+        const actions = document.createElement( 'div' );
+        actions.className = 'd-flex';
 
-          li.appendChild(actions);
-          list.appendChild(li);
+        const renameBtn = document.createElement( 'button' );
+        renameBtn.className = 'btn btn-sm btn-outline-secondary me-2';
+        renameBtn.textContent = 'Renommer';
+        actions.appendChild( renameBtn );
 
-          renameBtn.onclick = () => {
-            infoSpan.classList.add('d-none');
-            renameBtn.classList.add('d-none');
-            deleteBtn.classList.add('d-none');
+        const deleteBtn = document.createElement( 'button' );
+        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+        deleteBtn.textContent = 'Supprimer';
+        actions.appendChild( deleteBtn );
 
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = f.path.split('/').pop();
-            input.className = 'form-control form-control-sm me-2 mb-2 mb-md-0';
-            input.style.maxWidth = '200px';
+        li.appendChild( actions );
+        list.appendChild( li );
 
-            const saveBtn = document.createElement('button');
-            saveBtn.className = 'btn btn-sm btn-success me-2 mb-2 mb-md-0';
-            saveBtn.textContent = 'Valider';
+        renameBtn.onclick = () =>
+        {
+          infoSpan.classList.add( 'd-none' );
+          renameBtn.classList.add( 'd-none' );
+          deleteBtn.classList.add( 'd-none' );
 
-            const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'btn btn-sm btn-outline-secondary mb-2 mb-md-0';
-            cancelBtn.textContent = 'Annuler';
+          const input = document.createElement( 'input' );
+          input.type = 'text';
+          input.value = f.path.split( '/' ).pop();
+          input.className = 'form-control form-control-sm me-2 mb-2 mb-md-0';
+          input.style.maxWidth = '200px';
 
-            li.insertBefore(input, actions);
-            li.insertBefore(saveBtn, actions);
-            li.insertBefore(cancelBtn, actions);
+          const saveBtn = document.createElement( 'button' );
+          saveBtn.className = 'btn btn-sm btn-success me-2 mb-2 mb-md-0';
+          saveBtn.textContent = 'Valider';
 
-            saveBtn.onclick = async () => {
-              const newName = input.value.trim();
-              if (!newName) {
-                alert('Le nom ne peut pas être vide.');
-                return;
+          const cancelBtn = document.createElement( 'button' );
+          cancelBtn.className = 'btn btn-sm btn-outline-secondary mb-2 mb-md-0';
+          cancelBtn.textContent = 'Annuler';
+
+          li.insertBefore( input, actions );
+          li.insertBefore( saveBtn, actions );
+          li.insertBefore( cancelBtn, actions );
+
+          saveBtn.onclick = async () =>
+          {
+            const newName = input.value.trim();
+            if ( !newName )
+            {
+              alert( 'Le nom ne peut pas être vide.' );
+              return;
+            }
+            try
+            {
+              const url = f.type === 'folder' ? '/folder' : '/file';
+
+              // Pour dossier, on envoie oldPath, pour fichier, tu peux garder fileId si ton backend fichier l'attend
+              let body;
+              if ( f.type === 'folder' )
+              {
+                body = JSON.stringify( { oldPath: f.path, newName } );
+              } else
+              {
+                body = JSON.stringify( { fileId: f.id, newName } );
               }
-              try {
-                const res = await fetch('/files', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ fileId: f.id, newName })
-                });
-                if (res.ok) {
-                  refreshList();
-                } else {
-                  alert('Erreur lors du renommage.');
-                }
-              } catch {
-                alert('Erreur réseau.');
-              }
-            };
 
-            cancelBtn.onclick = () => {
-              input.remove();
-              saveBtn.remove();
-              cancelBtn.remove();
-              infoSpan.classList.remove('d-none');
-              renameBtn.classList.remove('d-none');
-              deleteBtn.classList.remove('d-none');
-            };
-          };
-
-          deleteBtn.onclick = async () => {
-            if (!confirm(`Supprimer définitivement "${f.path.split('/').pop()}" ?`)) return;
-            try {
-              const res = await fetch('/files', {
-                method: 'DELETE',
+              const res = await fetch( url, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileId: f.id })
-              });
-              if (res.status === 204) {
+                body
+              } );
+
+              if ( res.ok )
+              {
                 refreshList();
-              } else {
-                alert('Erreur lors de la suppression.');
+              } else
+              {
+                alert( 'Erreur lors du renommage.' );
               }
-            } catch {
-              alert('Erreur réseau.');
+            } catch
+            {
+              alert( 'Erreur réseau.' );
             }
           };
-        });
+
+
+          cancelBtn.onclick = () =>
+          {
+            input.remove();
+            saveBtn.remove();
+            cancelBtn.remove();
+            infoSpan.classList.remove( 'd-none' );
+            renameBtn.classList.remove( 'd-none' );
+            deleteBtn.classList.remove( 'd-none' );
+          };
+        };
+
+        deleteBtn.onclick = async () =>
+        {
+          const label = f.type === 'folder' ? 'le dossier' : 'le fichier';
+          if ( !confirm( `Supprimer définitivement ${ label } "${ f.path.split( '/' ).pop() }" ?` ) ) return;
+          try
+          {
+            const url = f.type === 'folder' ? '/folder' : '/file';
+
+            let body;
+            if ( f.type === 'folder' )
+            {
+              body = JSON.stringify( { folderPath: f.path } );
+            } else
+            {
+              body = JSON.stringify( { fileId: f.id } );
+            }
+
+            const res = await fetch( url, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body
+            } );
+
+            if ( res.status === 204 )
+            {
+              refreshList();
+            } else
+            {
+              alert( `Erreur lors de la suppression de ${ label }.` );
+            }
+          } catch
+          {
+            alert( 'Erreur réseau.' );
+          }
+        };
+
+      } );
+    }
+
+    form.onsubmit = async ( e ) =>
+    {
+      e.preventDefault();
+      const formData = new FormData( form );
+      const res = await fetch( '/file/create', {
+        method: 'POST',
+        body: formData
+      } );
+      if ( res.ok )
+      {
+        form.reset();
+        refreshList();
+      } else
+      {
+        alert( 'Erreur lors de l\'upload du fichier.' );
+      }
+    };
+
+    const ws = new WebSocket( 'ws://localhost:3000' );
+    ws.onopen = () => console.log( 'WebSocket connecté' );
+    ws.onmessage = ( event ) =>
+    {
+      let data;
+      try
+      {
+        data = JSON.parse( event.data );
+      } catch
+      {
+        console.warn( 'Message WebSocket invalide :', event.data );
+        return;
       }
 
-      form.onsubmit = async (e) => {
+      form.onsubmit = async ( e ) =>
+      {
         e.preventDefault();
-        const formData = new FormData(form);
-        const res = await fetch('/file/create', {
+        const formData = new FormData( form );
+        const res = await fetch( '/file/create', {
           method: 'POST',
           body: formData
-        });
-        if (res.ok) {
+        } );
+        if ( res.ok )
+        {
           form.reset();
           refreshList();
-        } else {
-          alert('Erreur lors de l\'upload du fichier.');
+        } else
+        {
+          alert( 'Erreur lors de l\'upload du fichier.' );
         }
       };
 
-      const ws = new WebSocket('ws://localhost:3000');
-      ws.onopen = () => console.log('WebSocket connecté');
-      ws.onmessage = (event) => {
+      const ws = new WebSocket( 'ws://localhost:3000' );
+      ws.onopen = () => console.log( 'WebSocket connecté' );
+      ws.onmessage = ( event ) =>
+      {
         let data;
-        try {
-          data = JSON.parse(event.data);
-        } catch {
-          console.warn('Message WebSocket invalide :', event.data);
+        try
+        {
+          data = JSON.parse( event.data );
+        } catch
+        {
+          console.warn( 'Message WebSocket invalide :', event.data );
           return;
         }
 
         const { type, by, fileId, filePath, file, newPath } = data;
 
-        switch (type) {
+        switch ( type )
+        {
           case 'file-created':
-            alert(`📄 Nouveau fichier créé par ${by} : ${filePath}`);
+            alert( `📄 Nouveau fichier créé par ${ by } : ${ filePath }` );
             break;
 
           case 'file-renamed':
-            alert(`✏️ Fichier renommé par ${by} : ${file?.path || filePath} → ${newPath}`);
+            alert( `✏️ Fichier renommé par ${ by } : ${ file?.path || filePath } → ${ newPath }` );
             break;
 
           case 'file-deleted':
-            alert(`🗑️ Fichier supprimé par ${by} : ${filePath}`);
+            alert( `🗑️ Fichier supprimé par ${ by } : ${ filePath }` );
             break;
 
           case 'file-shared':
-            alert(`🔗 Fichier partagé par ${by} : ${filePath}`);
+            alert( `🔗 Fichier partagé par ${ by } : ${ filePath }` );
             break;
 
           default:
-            console.log('Type de message WebSocket inconnu :', type);
+            console.log( 'Type de message WebSocket inconnu :', type );
         }
 
         refreshList();
       };
-      ws.onclose = () => console.log('WebSocket déconnecté');
-      ws.onerror = (err) => console.error('Erreur WebSocket:', err);
+      ws.onclose = () => console.log( 'WebSocket déconnecté' );
+      ws.onerror = ( err ) => console.error( 'Erreur WebSocket:', err );
 
       refreshList();
 
-      async function populateUserSelect(fileId) {
-        const select = document.getElementById('userSelect');
+      async function populateUserSelect ( fileId )
+      {
+        const select = document.getElementById( 'userSelect' );
         select.innerHTML = '<option disabled>Chargement...</option>';
 
-        try {
-          const res = await fetch('/home/users');
-          if (!res.ok) throw new Error();
+        try
+        {
+          const res = await fetch( '/home/users' );
+          if ( !res.ok ) throw new Error();
           const users = await res.json();
 
           select.innerHTML = '';
-          users.forEach(user => {
-            const option = document.createElement('option');
+          users.forEach( user =>
+          {
+            const option = document.createElement( 'option' );
             option.value = user.id;
             option.textContent = user.username || user.name || user.id;
-            select.appendChild(option);
-          });
+            select.appendChild( option );
+          } );
 
-          if (users.length === 0) {
+          if ( users.length === 0 )
+          {
             select.innerHTML = '<option disabled>Aucun autre utilisateur</option>';
           }
 
-        } catch (err) {
+        } catch ( err )
+        {
           select.innerHTML = '<option disabled>Erreur de chargement</option>';
         }
       }
 
-      document.addEventListener('DOMContentLoaded', () => {
-        const shareConfirmBtn = document.querySelector('#shareModal .modal-footer .btn-primary');
-        shareConfirmBtn.onclick = async () => {
-          const selected = Array.from(document.getElementById('userSelect').selectedOptions).map(opt => opt.value);
+      document.addEventListener( 'DOMContentLoaded', () =>
+      {
+        const shareConfirmBtn = document.querySelector( '#shareModal .modal-footer .btn-primary' );
+        shareConfirmBtn.onclick = async () =>
+        {
+          const selected = Array.from( document.getElementById( 'userSelect' ).selectedOptions ).map( opt => opt.value );
 
-          try {
-            const res = await fetch('/file/share', {
+          try
+          {
+            const res = await fetch( '/file/share', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+              body: JSON.stringify( {
                 fileId: currentFileId,
                 userIds: selected
-              })
-            });
+              } )
+            } );
 
-            if (res.ok) {
-              alert('Fichier partagé avec succès !');
-              bootstrap.Modal.getOrCreateInstance(document.getElementById('shareModal')).hide();
-            } else {
-              alert('Erreur lors du partage du fichier.');
+            if ( res.ok )
+            {
+              alert( 'Fichier partagé avec succès !' );
+              bootstrap.Modal.getOrCreateInstance( document.getElementById( 'shareModal' ) ).hide();
+            } else
+            {
+              alert( 'Erreur lors du partage du fichier.' );
             }
-          } catch {
-            alert('Erreur réseau lors du partage.');
+          } catch
+          {
+            alert( 'Erreur réseau lors du partage.' );
           }
         };
-      });
-    </script>
+      } );
+  </script>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"
-      crossorigin="anonymous"
-    ></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"
+    crossorigin="anonymous"
+  ></script>
 
-    <!-- Modal Partage -->
-    <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="shareModalLabel">Partager le fichier</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+  <!-- Modal Partage -->
+  <div
+    class="modal fade"
+    id="shareModal"
+    tabindex="-1"
+    aria-labelledby="shareModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5
+            class="modal-title"
+            id="shareModalLabel"
+          >Partager le fichier</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Fermer"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <p
+            id="shareFileName"
+            class="mb-2 text-muted"
+          ></p>
+          <div class="mb-3">
+            <label
+              for="userSelect"
+              class="form-label"
+            >Partager avec</label>
+            <select
+              multiple
+              class="form-select"
+              id="userSelect"
+            ></select>
           </div>
-          <div class="modal-body">
-            <p id="shareFileName" class="mb-2 text-muted"></p>
-            <div class="mb-3">
-              <label for="userSelect" class="form-label">Partager avec</label>
-              <select multiple class="form-select" id="userSelect"></select>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            <button type="button" class="btn btn-primary">Partager</button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >Fermer</button>
+          <button
+            type="button"
+            class="btn btn-primary"
+          >Partager</button>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
