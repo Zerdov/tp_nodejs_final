@@ -34,7 +34,6 @@ export const getJsonBody = (req: http.IncomingMessage): Promise<unknown> =>
     });
 
     req.on('end', () => {
-      console.log('[DEBUG] raw body:', body);
       try {
         resolve(JSON.parse(body));
       } catch (err) {
