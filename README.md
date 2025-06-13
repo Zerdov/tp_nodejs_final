@@ -5,7 +5,7 @@
 Développer une API HTTP en Node.js permettant à un utilisateur authentifié :
 - de se connecter avec des identifiants prédéfinis (fichier JSON)
 - de consulter, ajouter, supprimer des fichiers dans son espace personnel
-- de partager un repertoire avec d’autres utilisateurs
+- de partager un repertoire avec d'autres utilisateurs
 - d’être notifié en temps réel via WebSocket des changements au niveau des fichiers et des répertoires.
 - d'utiliser des commandes système via spawn ou exec pour compresser ou analyser des fichiers
 

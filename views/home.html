@@ -52,13 +52,18 @@
       id="createForm"
       class="mt-3"
     >
-      <div class="mb-3">
+      <div class="input-group mb-3">
         <input
           type="file"
           name="file"
           class="form-control"
           required
         />
+        <select
+          id="showFolders"
+          class="form-select"
+        >
+        </select>
       </div>
       <button
         type="submit"
@@ -75,6 +80,7 @@
   </div>
 
   <script>
+    refreshFolderSelect();
     const list = document.getElementById( 'fileList' );
     const form = document.getElementById( 'createForm' );
     let currentFileId = null;
@@ -190,6 +196,7 @@
               {
                 alert( 'Erreur lors du renommage.' );
               }
+              refreshFolderSelect();
             } catch
             {
               alert( 'Erreur réseau.' );
@@ -250,6 +257,11 @@
     {
       e.preventDefault();
       const formData = new FormData( form );
+      const selectedFolder = document.getElementById( 'showFolders' ).value;
+      if ( selectedFolder )
+      {
+        formData.append( 'folderPath', selectedFolder );
+      }
       const res = await fetch( '/file/create', {
         method: 'POST',
         body: formData
@@ -428,7 +440,46 @@
       const folder = await createRes.json();
       console.log( 'Dossier créé:', folder );
       refreshList();
+      refreshFolderSelect();
     } );
+    async function refreshFolderSelect ()
+    {
+      const select = document.getElementById( 'showFolders' );
+      select.innerHTML = '<option value="">Sélectionner un dossier</option>';
+
+      try
+      {
+        const res = await fetch( '/folder/get', {
+          method: 'get',
+        } );
+        if ( !res.ok ) throw new Error();
+
+        const folders = await res.json();
+
+        folders.forEach( folder =>
+        {
+          const option = document.createElement( 'option' );
+          option.value = folder.path;
+          option.textContent = folder.path;
+          select.appendChild( option );
+        } );
+
+        if ( folders.length === 0 )
+        {
+          const option = document.createElement( 'option' );
+          option.disabled = true;
+          option.textContent = 'Aucun dossier disponible';
+          select.appendChild( option );
+        }
+
+      } catch ( err )
+      {
+        const option = document.createElement( 'option' );
+        option.disabled = true;
+        option.textContent = 'Erreur de chargement des dossiers';
+        select.appendChild( option );
+      }
+    }
   </script>
 
   <script

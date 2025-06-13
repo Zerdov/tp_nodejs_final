@@ -56,7 +56,6 @@ const server = http.createServer( ( req, res ) =>
 }
 );
 
-// Crée ton serveur WebSocket en lui passant le serveur HTTP
 setupWebSocketServer( server );
 
 server.listen( 3000, () =>

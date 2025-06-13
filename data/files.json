@@ -16,7 +16,7 @@
   {
     "id": "prjf79x767b",
     "owner": "user-002",
-    "path": "/user-002/trses",
+    "path": "/user-002/test",
     "type": "folder",
     "sharedWith": [
       "user-001"
@@ -27,6 +27,69 @@
     "owner": "user-002",
     "path": "/user-002/test23",
     "type": "folder",
+    "sharedWith": []
+  },
+  {
+    "id": "94brr240c25",
+    "owner": "user-002",
+    "path": "/user-002/rendu.md",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "r5i70easjb",
+    "owner": "user-002",
+    "path": "/user-002/Projet Final Grille Evaluation.pdf",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "rxz0fr2gsj",
+    "owner": "user-002",
+    "path": "/user-002/Projet_NodeJSAPI.docx",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "3u8ktimjvlo",
+    "owner": "user-002",
+    "path": "/user-002/Projet Final Grille Evaluation.pdf",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "kl5wno5g7io",
+    "owner": "user-002",
+    "path": "/user-002/Projet Final Grille Evaluation.pdf",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "s7pw7ovrly",
+    "owner": "user-002",
+    "path": "/user-002/Projet_NodeJSAPI.docx",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "i2046abq64",
+    "owner": "user-002",
+    "path": "/user-002/Projet_NodeJSAPI(1).docx",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "c9k191gi0qw",
+    "owner": "user-002",
+    "path": "/user-002/PPT ESGI - Rapport d'activité.pptx",
+    "type": "file",
+    "sharedWith": []
+  },
+  {
+    "id": "t12qfu64nx9",
+    "owner": "user-002",
+    "path": "/user-002/test/61of1w2zgSL.jpg",
+    "type": "file",
     "sharedWith": []
   }
 ]

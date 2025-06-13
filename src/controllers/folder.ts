@@ -22,9 +22,45 @@ export const index = async (
     if ( req.method === 'POST' ) return create( req, res );
     if ( req.method === 'PUT' ) return update( req, res );
     if ( req.method === 'DELETE' ) return remove( req, res );
+    if ( req.method === 'GET' ) return get( req, res );
 
     res.writeHead( 405 );
     res.end( 'Méthode non supportée' );
+};
+
+export const get = async (
+    req: http.IncomingMessage,
+    res: http.ServerResponse & { req: http.IncomingMessage; }
+) =>
+{
+    const user = await getAuthenticatedUser( req );
+    if ( !user )
+    {
+        res.writeHead( 401 );
+        res.end( 'Unauthorized' );
+        return;
+    }
+
+    try
+    {
+        const dataPath = path.resolve( __dirname, '../../data/files.json' );
+        const rawData = fs.readFileSync( dataPath, 'utf-8' );
+        const files: File[] = JSON.parse( rawData );
+
+        // Filtrer uniquement les dossiers accessibles à l'utilisateur
+        const folders = files.filter( file =>
+            file.type === 'folder' &&
+            ( file.owner === user.id || file.sharedWith.includes( user.id ) )
+        );
+
+        res.writeHead( 200, { 'Content-Type': 'application/json' } );
+        res.end( JSON.stringify( folders ) );
+    } catch ( err )
+    {
+        console.error( 'Erreur lecture files.json :', err );
+        res.writeHead( 500 );
+        res.end( 'Internal server error' );
+    }
 };
 
 export const create = async (

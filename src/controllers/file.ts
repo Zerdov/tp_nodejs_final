@@ -5,7 +5,6 @@ import path from 'path';
 import fs from 'fs';
 import { notifyUsersForPath } from '../ws/server';
 import { getJsonBody } from '../utils/getBody';
-import { getView } from '../utils/getFile';
 
 export const index = async (
   req: http.IncomingMessage,
@@ -48,8 +47,17 @@ export const create = async (
   {
     const body = Buffer.concat( chunks );
     const parts = body.toString().split( `--${ boundary }` );
-    const filePart = parts.find( p => p.includes( 'filename=' ) );
 
+    const filePart = parts.find( p => p.includes( 'filename=' ) );
+    const folderPart = parts.find( p => p.includes( 'name="folderPath"' ) );
+
+    let folderPath = '';
+    if ( folderPart )
+    {
+      const [ , value ] = folderPart.split( '\r\n\r\n' );
+      folderPath = value ? value.trim().replace( /--$/, '' ) : '';
+
+    }
     if ( !filePart )
     {
       res.writeHead( 400 );
@@ -69,7 +77,12 @@ export const create = async (
     const binary = filePart.split( '\r\n\r\n' )[ 1 ].trimEnd();
     const buffer = Buffer.from( binary, 'binary' );
 
-    const dir = path.join( __dirname, '..', '..', 'data', 'files', user.id );
+    const folderPathNormalized = folderPath.startsWith( '/' ) ? folderPath.slice( 1 ) : folderPath;
+    const safeFolder = folderPath && folderPathNormalized.startsWith( user.id )
+      ? folderPathNormalized
+      : user.id;
+
+    const dir = path.join( __dirname, '..', '..', 'data', 'files', safeFolder );
     fs.mkdirSync( dir, { recursive: true } );
     const filePath = path.join( dir, filename );
     fs.writeFileSync( filePath, buffer );
@@ -78,10 +91,11 @@ export const create = async (
     const fileObj: File = {
       id: Math.random().toString( 36 ).slice( 2 ),
       owner: user.id,
-      path: `/${ user.id }/${ filename }`,
+      path: `/${ safeFolder }/${ filename }`,
       type: 'file',
       sharedWith: [],
     };
+
     await writeFilesJson( createFile( files, fileObj ) );
     await notifyUsersForPath( fileObj.path, {
       type: 'file-created',
@@ -95,6 +109,7 @@ export const create = async (
     res.end( JSON.stringify( fileObj ) );
   } );
 };
+
 
 export const read = async (
   req: http.IncomingMessage,
@@ -171,15 +186,12 @@ export const update = async (
         return;
       }
 
-      // Construire les chemins physiques
       const oldPath = path.join( __dirname, '..', '..', 'data', 'files', file.path );
       const dir = path.dirname( oldPath );
       const newPath = path.join( dir, newName );
 
-      // Renommer fichier sur disque
       fs.renameSync( oldPath, newPath );
 
-      // Mettre à jour path dans files.json
       file.path = `/${ user.id }/${ newName }`;
       await writeFilesJson( updateFile( files, file.id, file ) );
       await notifyUsersForPath( file.path, {
@@ -253,14 +265,12 @@ export const deleteFileHandler = async (
         return;
       }
 
-      // Supprimer fichier physique
       const filePath = path.join( __dirname, '..', '..', 'data', 'files', file.path );
       if ( fs.existsSync( filePath ) )
       {
         fs.unlinkSync( filePath );
       }
 
-      // Mettre à jour files.json
       await writeFilesJson( deleteFile( files, fileId ) );
       await notifyUsersForPath( file.path, {
         type: 'file-deleted',
