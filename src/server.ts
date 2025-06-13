@@ -2,7 +2,7 @@ import http from 'http';
 import { index as homeController, getUsersEP as getUsers } from './controllers/home';
 import { index as loginController } from './controllers/login';
 import { index as fileController, share as shareFile } from './controllers/file';
-import { index as folderController } from './controllers/folder';
+import { downloadZip, index as folderController } from './controllers/folder';
 import { isLoggedIn, logout } from './utils/auth';
 import { getView } from './utils/getFile';
 import { setupWebSocketServer } from './ws/server'; // importe ton setup WS
@@ -39,6 +39,10 @@ const server = http.createServer( ( req, res ) =>
       }
       if ( req.url?.startsWith( '/folder' ) )
       {
+        if (req.url === '/folder/download') {
+          await downloadZip(req, res);
+          return;
+        }
         await folderController( req, res );
         return;
       }

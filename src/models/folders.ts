@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import fsSync from 'fs'; // pour méthodes sync nécessaires (ex: existsSync)
+import { spawn } from 'child_process';
 
 export type File = {
     id: string;
@@ -133,4 +134,39 @@ export const deleteFolder = async ( folderPath: string, owner: string ): Promise
     await writeFilesJson( filteredFiles );
 
     return true;
+};
+
+export const zipFolder = (folderName: string): Promise<string> =>
+{
+    return new Promise((resolve, reject) =>
+    {
+        const sourceDir = path.resolve(__dirname, '../../data/files', folderName);
+        const outputDir = path.resolve(__dirname, '../../data/archives');
+        const outputZip = path.join(outputDir, `${folderName}.zip`);
+
+        // Vérifie si le dossier à zipper existe
+        if (!fsSync.existsSync(sourceDir))
+        {
+            return reject(new Error('Dossier source introuvable'));
+        }
+
+        // Crée le dossier de sortie s’il n’existe pas
+        if (!fsSync.existsSync(outputDir))
+        {
+            fsSync.mkdirSync(outputDir, { recursive: true });
+        }
+
+        const zip = spawn('zip', ['-r', outputZip, '.'], { cwd: sourceDir });
+
+        zip.on('close', (code) =>
+        {
+            if (code === 0) resolve(outputZip);
+            else reject(new Error(`Le processus zip s'est terminé avec le code ${code}`));
+        });
+
+        zip.on('error', (err) =>
+        {
+            reject(err);
+        });
+    });
 };
