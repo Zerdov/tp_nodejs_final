@@ -4,9 +4,7 @@
     "owner": "user-001",
     "path": "/user-001/index.md",
     "type": "file",
-    "sharedWith": [
-      "user-002"
-    ]
+    "sharedWith": []
   },
   {
     "id": "xyz456",
@@ -29,8 +27,6 @@
     "owner": "user-001",
     "path": "/user-001/gitlab.svg",
     "type": "file",
-    "sharedWith": [
-      "user-002"
-    ]
+    "sharedWith": []
   }
 ]

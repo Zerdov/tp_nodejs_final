@@ -274,7 +274,7 @@ export const share = async (
 
   const { fileId, userIds } = body;
 
-  if (!fileId || !Array.isArray(userIds)) {
+  if (!fileId) {
     res.writeHead(400);
     res.end('Paramètres manquants ou invalides');
     return;
@@ -295,7 +295,12 @@ export const share = async (
     return;
   }
 
-  file.sharedWith = Array.from(new Set([...(file.sharedWith || []), ...userIds]));
+  if (userIds.length === 0) {
+    file.sharedWith = [];
+  } else {
+    file.sharedWith = Array.from(new Set([...(file.sharedWith || []), ...userIds]));
+  }
+
   await writeFilesJson(files);
 
   for (const targetId of userIds) {

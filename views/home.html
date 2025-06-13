@@ -238,10 +238,6 @@
         const shareConfirmBtn = document.querySelector('#shareModal .modal-footer .btn-primary');
         shareConfirmBtn.onclick = async () => {
           const selected = Array.from(document.getElementById('userSelect').selectedOptions).map(opt => opt.value);
-          if (!selected.length) {
-            alert('Sélectionnez au moins un utilisateur.');
-            return;
-          }
 
           try {
             const res = await fetch('/file/share', {
