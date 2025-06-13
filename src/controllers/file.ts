@@ -273,7 +273,6 @@ export const share = async (
   }
 
   const { fileId, userIds } = body;
-  console.log({ fileId, userIds });
 
   if (!fileId || !Array.isArray(userIds)) {
     res.writeHead(400);
