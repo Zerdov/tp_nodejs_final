@@ -51,6 +51,12 @@ pnpm i
 pnpm dev
 ```
 
+### Démarrer les tests
+
+```bash
+pnpm test
+```
+
 ### Structure
 
 On a décidé de partir sur une structure **M**odels **V**iews **C**ontrollers
