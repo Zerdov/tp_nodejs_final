@@ -1,48 +1,39 @@
 [
   {
-    "id": "abc123",
-    "owner": "user-001",
-    "path": "/user-001/index.md",
-    "type": "file",
-    "sharedWith": []
-  },
-  {
-    "id": "aojbj0gjdmm",
-    "owner": "user-001",
-    "path": "/user-001/gitlab.svg",
-    "type": "file",
-    "sharedWith": []
-  },
-  {
-    "id": "prjf79x767b",
+    "id": "64or96fz",
     "owner": "user-002",
-    "path": "/user-002/test23",
+    "path": "/user-002/fichier1",
     "type": "folder",
+    "sharedWith": []
+  },
+  {
+    "id": "v8189r9e81",
+    "owner": "user-002",
+    "path": "/user-002/fichier1/perimice-513-wired-ergonomic-vertical-mouse-224152.webp",
+    "type": "file",
     "sharedWith": [
       "user-001"
     ]
   },
   {
-    "id": "g8b4trq73n",
+    "id": "15hq1r3r5ve",
     "owner": "user-002",
-    "path": "/user-002/test23",
-    "type": "folder",
+    "path": "/user-002/Projet Final Grille Evaluation.pdf",
+    "type": "file",
     "sharedWith": []
   },
   {
-    "id": "2xpb4n0n",
+    "id": "0fm0l3zu03vs",
     "owner": "user-001",
-    "path": "/user-001/TEST",
-    "type": "folder",
-    "sharedWith": [
-      "user-002"
-    ]
+    "path": "/user-001/61of1w2zgSL.jpg",
+    "type": "file",
+    "sharedWith": []
   },
   {
-    "id": "osv8jpq8u59",
-    "owner": "user-002",
-    "path": "/user-002/Projet_NodeJSAPI(1).docx",
-    "type": "file",
+    "id": "rgnaw1yt",
+    "owner": "user-001",
+    "path": "/user-001/folder2",
+    "type": "folder",
     "sharedWith": []
   }
 ]
