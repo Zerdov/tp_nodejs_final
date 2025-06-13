@@ -7,22 +7,6 @@
     "sharedWith": []
   },
   {
-    "id": "xyz456",
-    "owner": "user-001",
-    "path": "/user-001/shared",
-    "type": "folder",
-    "sharedWith": [
-      "user-002"
-    ]
-  },
-  {
-    "id": "juwbqr64dc",
-    "owner": "user-001",
-    "path": "/user-001/guthib.svg",
-    "type": "file",
-    "sharedWith": []
-  },
-  {
     "id": "aojbj0gjdmm",
     "owner": "user-001",
     "path": "/user-001/gitlab.svg",
