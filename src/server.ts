@@ -1,7 +1,7 @@
 import http from 'http';
-import { index as homeController } from './controllers/home';
+import { index as homeController, getUsersEP as getUsers } from './controllers/home';
 import { index as loginController } from './controllers/login';
-import { index as fileController } from './controllers/file';
+import { index as fileController, share as shareFile } from './controllers/file';
 import { isLoggedIn, logout } from './utils/auth';
 import { getView } from './utils/getFile';
 import { setupWebSocketServer } from './ws/server'; // importe ton setup WS
@@ -19,7 +19,15 @@ const server = http.createServer((req, res) => {
         await homeController(req, res);
         return;
       }
+      if (req.url === '/home/users') {
+        await getUsers(req, res);
+        return;
+      }
       if (req.url?.startsWith('/file')) {
+        if (req.url === '/file/share') {
+          await shareFile(req, res);
+          return;
+        }
         await fileController(req, res);
         return;
       }

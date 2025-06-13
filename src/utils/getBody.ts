@@ -24,3 +24,23 @@ export const getRequestBody = (req: http.IncomingMessage): Promise<any> => {
     });
   });
 };
+
+export const getJsonBody = (req: http.IncomingMessage): Promise<unknown> =>
+  new Promise((resolve, reject) => {
+    let body = '';
+
+    req.on('data', chunk => {
+      body += chunk;
+    });
+
+    req.on('end', () => {
+      console.log('[DEBUG] raw body:', body);
+      try {
+        resolve(JSON.parse(body));
+      } catch (err) {
+        reject(new Error('Corps JSON invalide'));
+      }
+    });
+
+    req.on('error', reject);
+  });

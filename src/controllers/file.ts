@@ -4,6 +4,8 @@ import { getAuthenticatedUser } from '../utils/auth';
 import path from 'path';
 import fs from 'fs';
 import { notifyUsersForPath } from '../ws/server';
+import { getJsonBody } from '../utils/getBody';
+import { getView } from '../utils/getFile';
 
 export const index = async (
   req: http.IncomingMessage,
@@ -242,4 +244,69 @@ export const deleteFileHandler = async (
       res.end('Internal server error');
     }
   });
+};
+
+export const share = async (
+  req: http.IncomingMessage,
+  res: http.ServerResponse & { req: http.IncomingMessage }
+) => {
+  if (req.method !== 'POST') {
+    res.writeHead(405);
+    res.end('Méthode non autorisée');
+    return;
+  }
+
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    res.writeHead(401);
+    res.end('Non authentifié');
+    return;
+  }
+
+  let body: any;
+  try {
+    body = await getJsonBody(req);
+  } catch (err) {
+    res.writeHead(400);
+    res.end('JSON invalide');
+    return;
+  }
+
+  const { fileId, userIds } = body;
+  console.log({ fileId, userIds });
+
+  if (!fileId || !Array.isArray(userIds)) {
+    res.writeHead(400);
+    res.end('Paramètres manquants ou invalides');
+    return;
+  }
+
+  const files = await readFilesJson();
+  const file = files.find((f) => f.id === fileId);
+
+  if (!file) {
+    res.writeHead(404);
+    res.end('Fichier introuvable');
+    return;
+  }
+
+  if (file.owner !== user.id) {
+    res.writeHead(403);
+    res.end('Accès interdit');
+    return;
+  }
+
+  file.sharedWith = Array.from(new Set([...(file.sharedWith || []), ...userIds]));
+  await writeFilesJson(files);
+
+  for (const targetId of userIds) {
+    notifyUsersForPath(targetId, {
+      type: 'file-shared',
+      by: user.username,
+      file: file.path
+    });
+  }
+
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ success: true }));
 };

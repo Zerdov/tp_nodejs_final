@@ -29,6 +29,8 @@
     "owner": "user-001",
     "path": "/user-001/gitlab.svg",
     "type": "file",
-    "sharedWith": []
+    "sharedWith": [
+      "user-002"
+    ]
   }
 ]
