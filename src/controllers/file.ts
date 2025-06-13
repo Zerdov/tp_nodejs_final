@@ -267,7 +267,6 @@ export const deleteFileHandler = async (
         by: user.id,
         fileId: file.id,
         filePath: file.path,
-        by: user.id
       } );
 
       res.writeHead( 204 );

@@ -24,6 +24,8 @@
         class="btn btn-outline-danger"
       >Se déconnecter</a>
     </div>
+
+    <!-- Partie création dossier -->
     <div>
       <h2>Créer un dossier</h2>
       <form id="createFolder">
@@ -44,6 +46,7 @@
       ></p>
     </div>
 
+    <!-- Partie upload fichier -->
     <h2 class="mt-5">Uploader un fichier</h2>
     <form
       id="createForm"
@@ -63,6 +66,7 @@
       >Uploader</button>
     </form>
 
+    <!-- Liste des fichiers -->
     <h2 class="mt-5">Vos fichiers accessibles</h2>
     <ul
       id="fileList"
@@ -73,6 +77,7 @@
   <script>
     const list = document.getElementById( 'fileList' );
     const form = document.getElementById( 'createForm' );
+    let currentFileId = null;
 
     async function refreshList ()
     {
@@ -90,6 +95,15 @@
         const li = document.createElement( 'li' );
         li.className = 'list-group-item d-flex justify-content-between align-items-center flex-wrap';
 
+        const infoSpan = document.createElement( 'span' );
+        infoSpan.className = 'me-3 mb-2 mb-md-0';
+        infoSpan.textContent = `${ f.type.toUpperCase() } - ${ f.path }`;
+        li.appendChild( infoSpan );
+
+        const actions = document.createElement( 'div' );
+        actions.className = 'd-flex';
+
+        // Bouton Partager
         const shareBtn = document.createElement( 'button' );
         shareBtn.className = 'btn btn-sm btn-outline-primary me-2';
         shareBtn.textContent = 'Partager';
@@ -101,25 +115,9 @@
         {
           currentFileId = f.id;
           document.getElementById( 'shareFileName' ).textContent = `Fichier : ${ f.path }`;
-
-          // Appelle la fonction en passant l'id du fichier
           await populateUserSelect( currentFileId );
-
-          // Puis ouvrir la modale via Bootstrap
           bootstrap.Modal.getOrCreateInstance( document.getElementById( 'shareModal' ) ).show();
         };
-
-        const deleteBtn = document.createElement( 'button' );
-        deleteBtn.className = 'btn btn-sm btn-outline-danger';
-        deleteBtn.textContent = 'Supprimer';
-        actions.appendChild( deleteBtn );
-        const infoSpan = document.createElement( 'span' );
-        infoSpan.className = 'me-3 mb-2 mb-md-0';
-        infoSpan.textContent = `${ f.type.toUpperCase() } - ${ f.path }`;
-        li.appendChild( infoSpan );
-
-        const actions = document.createElement( 'div' );
-        actions.className = 'd-flex';
 
         const renameBtn = document.createElement( 'button' );
         renameBtn.className = 'btn btn-sm btn-outline-secondary me-2';
@@ -170,7 +168,6 @@
             {
               const url = f.type === 'folder' ? '/folder' : '/file';
 
-              // Pour dossier, on envoie oldPath, pour fichier, tu peux garder fileId si ton backend fichier l'attend
               let body;
               if ( f.type === 'folder' )
               {
@@ -198,7 +195,6 @@
               alert( 'Erreur réseau.' );
             }
           };
-
 
           cancelBtn.onclick = () =>
           {
@@ -282,132 +278,157 @@
         return;
       }
 
-      form.onsubmit = async ( e ) =>
+      const { type, by, fileId, filePath, file, newPath } = data;
+
+      switch ( type )
       {
-        e.preventDefault();
-        const formData = new FormData( form );
-        const res = await fetch( '/file/create', {
-          method: 'POST',
-          body: formData
-        } );
-        if ( res.ok )
-        {
-          form.reset();
-          refreshList();
-        } else
-        {
-          alert( 'Erreur lors de l\'upload du fichier.' );
-        }
-      };
+        case 'file-created':
+          alert( `📄 Nouveau fichier créé par ${ by } : ${ filePath }` );
+          break;
 
-      const ws = new WebSocket( 'ws://localhost:3000' );
-      ws.onopen = () => console.log( 'WebSocket connecté' );
-      ws.onmessage = ( event ) =>
-      {
-        let data;
-        try
-        {
-          data = JSON.parse( event.data );
-        } catch
-        {
-          console.warn( 'Message WebSocket invalide :', event.data );
-          return;
-        }
+        case 'file-renamed':
+          alert( `✏️ Fichier renommé par ${ by } : ${ file?.path || filePath } → ${ newPath }` );
+          break;
 
-        const { type, by, fileId, filePath, file, newPath } = data;
+        case 'file-deleted':
+          alert( `🗑️ Fichier supprimé par ${ by } : ${ filePath }` );
+          break;
 
-        switch ( type )
-        {
-          case 'file-created':
-            alert( `📄 Nouveau fichier créé par ${ by } : ${ filePath }` );
-            break;
+        case 'file-shared':
+          alert( `🔗 Fichier partagé par ${ by } : ${ filePath }` );
+          break;
 
-          case 'file-renamed':
-            alert( `✏️ Fichier renommé par ${ by } : ${ file?.path || filePath } → ${ newPath }` );
-            break;
-
-          case 'file-deleted':
-            alert( `🗑️ Fichier supprimé par ${ by } : ${ filePath }` );
-            break;
-
-          case 'file-shared':
-            alert( `🔗 Fichier partagé par ${ by } : ${ filePath }` );
-            break;
-
-          default:
-            console.log( 'Type de message WebSocket inconnu :', type );
-        }
-
-        refreshList();
-      };
-      ws.onclose = () => console.log( 'WebSocket déconnecté' );
-      ws.onerror = ( err ) => console.error( 'Erreur WebSocket:', err );
-
-      refreshList();
-
-      async function populateUserSelect ( fileId )
-      {
-        const select = document.getElementById( 'userSelect' );
-        select.innerHTML = '<option disabled>Chargement...</option>';
-
-        try
-        {
-          const res = await fetch( '/home/users' );
-          if ( !res.ok ) throw new Error();
-          const users = await res.json();
-
-          select.innerHTML = '';
-          users.forEach( user =>
-          {
-            const option = document.createElement( 'option' );
-            option.value = user.id;
-            option.textContent = user.username || user.name || user.id;
-            select.appendChild( option );
-          } );
-
-          if ( users.length === 0 )
-          {
-            select.innerHTML = '<option disabled>Aucun autre utilisateur</option>';
-          }
-
-        } catch ( err )
-        {
-          select.innerHTML = '<option disabled>Erreur de chargement</option>';
-        }
+        default:
+          console.log( 'Type de message WebSocket inconnu :', type );
       }
 
-      document.addEventListener( 'DOMContentLoaded', () =>
+      refreshList();
+    };
+    ws.onclose = () => console.log( 'WebSocket déconnecté' );
+    ws.onerror = ( err ) => console.error( 'Erreur WebSocket:', err );
+
+    refreshList();
+
+    async function populateUserSelect ( fileId )
+    {
+      const select = document.getElementById( 'userSelect' );
+      select.innerHTML = '<option disabled>Chargement...</option>';
+
+      try
       {
-        const shareConfirmBtn = document.querySelector( '#shareModal .modal-footer .btn-primary' );
-        shareConfirmBtn.onclick = async () =>
+        const res = await fetch( '/home/users' );
+        if ( !res.ok ) throw new Error();
+        const users = await res.json();
+
+        select.innerHTML = '';
+        users.forEach( user =>
         {
-          const selected = Array.from( document.getElementById( 'userSelect' ).selectedOptions ).map( opt => opt.value );
+          const option = document.createElement( 'option' );
+          option.value = user.id;
+          option.textContent = user.username || user.name || user.id;
+          select.appendChild( option );
+        } );
 
-          try
-          {
-            const res = await fetch( '/file/share', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify( {
-                fileId: currentFileId,
-                userIds: selected
-              } )
-            } );
+        if ( users.length === 0 )
+        {
+          select.innerHTML = '<option disabled>Aucun autre utilisateur</option>';
+        }
 
-            if ( res.ok )
-            {
-              alert( 'Fichier partagé avec succès !' );
-              bootstrap.Modal.getOrCreateInstance( document.getElementById( 'shareModal' ) ).hide();
-            } else
-            {
-              alert( 'Erreur lors du partage du fichier.' );
-            }
-          } catch
+      } catch ( err )
+      {
+        select.innerHTML = '<option disabled>Erreur de chargement</option>';
+      }
+    }
+
+    document.addEventListener( 'DOMContentLoaded', () =>
+    {
+      const shareConfirmBtn = document.querySelector( '#shareModal .modal-footer .btn-primary' );
+      shareConfirmBtn.onclick = async () =>
+      {
+        const selected = Array.from( document.getElementById( 'userSelect' ).selectedOptions ).map( opt => opt.value );
+
+        try
+        {
+          const res = await fetch( '/file/share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify( {
+              fileId: currentFileId,
+              userIds: selected
+            } )
+          } );
+
+          if ( res.ok )
           {
-            alert( 'Erreur réseau lors du partage.' );
+            alert( 'Fichier partagé avec succès !' );
+            bootstrap.Modal.getOrCreateInstance( document.getElementById( 'shareModal' ) ).hide();
+          } else
+          {
+            alert( 'Erreur lors du partage du fichier.' );
           }
-        };
+        } catch
+        {
+          alert( 'Erreur réseau lors du partage.' );
+        }
+      };
+    } );
+
+    // Gestion création dossier
+    document.getElementById( 'createFolder' )?.addEventListener( 'submit', async function ( e )
+    {
+      e.preventDefault();
+
+      const folderNameInput = document.getElementById( 'folderName' );
+      const folderName = folderNameInput.value.trim();
+      const errorDisplay = document.getElementById( 'folderError' );
+
+      if ( !folderName )
+      {
+        errorDisplay.textContent = 'Le nom du dossier est requis.';
+        errorDisplay.style.display = 'block';
+        return;
+      }
+
+      // Récupérer les fichiers pour vérifier l'existence du dossier
+      const res = await fetch( '/file', { method: 'GET' } );
+      const files = await res.json();
+
+      const folderExists = files.some( f => f.type === 'folder' && f.path.endsWith( `/${ folderName }` ) );
+
+      if ( folderExists )
+      {
+        errorDisplay.textContent = 'Un dossier avec ce nom existe déjà.';
+        errorDisplay.style.display = 'block';
+        return;
+      }
+
+      const createRes = await fetch( '/folder/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify( { name: folderName } )
       } );
+
+      if ( createRes.status === 409 )
+      {
+        errorDisplay.textContent = 'Un dossier avec ce nom existe déjà (confirmé par le serveur).';
+        errorDisplay.style.display = 'block';
+        return;
+      }
+
+      if ( !createRes.ok )
+      {
+        errorDisplay.textContent = 'Erreur lors de la création du dossier.';
+        errorDisplay.style.display = 'block';
+        return;
+      }
+
+      // Tout s'est bien passé
+      folderNameInput.value = '';
+      errorDisplay.style.display = 'none';
+      const folder = await createRes.json();
+      console.log( 'Dossier créé:', folder );
+      refreshList();
+    } );
   </script>
 
   <script

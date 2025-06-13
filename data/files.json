@@ -34,7 +34,9 @@
     "owner": "user-002",
     "path": "/user-002/trses",
     "type": "folder",
-    "sharedWith": []
+    "sharedWith": [
+      "user-001"
+    ]
   },
   {
     "id": "g8b4trq73n",
