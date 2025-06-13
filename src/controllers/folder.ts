@@ -232,53 +232,66 @@ export const remove = async (
 export const downloadZip = async (
     req: http.IncomingMessage,
     res: http.ServerResponse & { req: http.IncomingMessage; }
-) => {
-  const user = await getAuthenticatedUser(req);
-  if (!user) {
-    res.writeHead(401);
-    res.end('Unauthorized');
-    return;
-  }
-
-  if (req.method !== 'POST' || req.headers['content-type'] !== 'application/json') {
-    res.writeHead(400);
-    res.end('Requête invalide');
-    return;
-  }
-
-  let body = '';
-  req.on('data', chunk => (body += chunk));
-  req.on('end', async () => {
-    try {
-      const { folderId } = JSON.parse(body);
-      if (!folderId) {
-        res.writeHead(400);
-        res.end('Missing folderId');
+) =>
+{
+    const user = await getAuthenticatedUser( req );
+    if ( !user )
+    {
+        res.writeHead( 401 );
+        res.end( 'Unauthorized' );
         return;
-      }
-
-      const folder = await getFolderById(folderId);
-      if (!folder || !folder.sharedWith.includes(user.id)) {
-        res.writeHead(403);
-        res.end('Accès interdit');
-        return;
-      }
-
-      const zipPath = await zipFolder(folderId);
-
-      const stat = fs.statSync(zipPath);
-      res.writeHead(200, {
-        'Content-Type': 'application/zip',
-        'Content-Length': stat.size,
-        'Content-Disposition': `attachment; filename="${folder.path}.zip"`
-      });
-
-      const readStream = fs.createReadStream(zipPath);
-      readStream.pipe(res);
-    } catch (err) {
-      console.error('Erreur zip:', err);
-      res.writeHead(500);
-      res.end('Erreur lors de la compression');
     }
-  });
+
+    if ( req.method !== 'POST' || req.headers[ 'content-type' ] !== 'application/json' )
+    {
+        res.writeHead( 400 );
+        res.end( 'Requête invalide' );
+        return;
+    }
+
+    let body = '';
+    req.on( 'data', chunk => ( body += chunk ) );
+    req.on( 'end', async () =>
+    {
+        try
+        {
+            const { folderId } = JSON.parse( body );
+            if ( !folderId )
+            {
+                res.writeHead( 400 );
+                res.end( 'Missing folderId' );
+                return;
+            }
+
+            const folder = await getFolderById( folderId );
+            if ( !folder || !folder.sharedWith.includes( user.id ) )
+            {
+                res.writeHead( 403 );
+                res.end( 'Accès interdit' );
+                return;
+            }
+
+            const folderPath = folder.path.startsWith( '/' )
+                ? folder.path.slice( 1 )
+                : folder.path;
+
+            const zipPath = await zipFolder( folderPath );
+
+            const stat = fs.statSync( zipPath );
+            res.writeHead( 200, {
+                'Content-Type': 'application/zip',
+                'Content-Length': stat.size,
+                'Content-Disposition': `attachment; filename="${ path.basename( folderPath ) }.zip"`
+            } );
+
+            const readStream = fs.createReadStream( zipPath );
+            readStream.pipe( res );
+        } catch ( err )
+        {
+            console.error( 'Erreur zip:', err );
+            res.writeHead( 500 );
+            res.end( 'Erreur lors de la compression' );
+        }
+    } );
 };
+  

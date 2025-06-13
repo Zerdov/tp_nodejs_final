@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
-import fsSync from 'fs'; // pour méthodes sync nécessaires (ex: existsSync)
+import fsSync from 'fs';
 import { spawn } from 'child_process';
+import archiver from 'archiver';
 
 export type File = {
     id: string;
@@ -70,21 +71,17 @@ export const updateFolder = async (
     const folder = files.find( f => f.owner === owner && f.path === oldPath && f.type === 'folder' );
     if ( !folder ) return null;
 
-    // Nouveau chemin
     const parts = oldPath.split( '/' );
     parts[ parts.length - 1 ] = newName;
     const newPath = parts.join( '/' );
 
-    // Chemins physiques
     const oldDir = path.resolve( __dirname, '../../data/files', owner, folder.path.split( '/' ).pop() || '' );
     const newDir = path.resolve( __dirname, '../../data/files', owner, newName );
 
-    // Renommer dossier physique
     try
     {
         if ( !fsSync.existsSync( oldDir ) )
         {
-            // Pas de dossier physique ? On peut continuer en mettant à jour JSON
             console.warn( `Dossier physique non trouvé: ${ oldDir }` );
         } else
         {
@@ -96,7 +93,6 @@ export const updateFolder = async (
         return null;
     }
 
-    // Mettre à jour path dans JSON
     folder.path = newPath;
 
     const updatedFiles = files.map( f => ( f.id === folder.id ? folder : f ) );
@@ -111,7 +107,6 @@ export const deleteFolder = async ( folderPath: string, owner: string ): Promise
     const folder = files.find( f => f.owner === owner && f.path === folderPath && f.type === 'folder' );
     if ( !folder ) return false;
 
-    // Supprimer dossier physique et contenu (récursif)
     const dir = path.resolve( __dirname, '../../data/files', owner, folderPath.split( '/' ).pop() || '' );
 
     try
@@ -126,7 +121,6 @@ export const deleteFolder = async ( folderPath: string, owner: string ): Promise
         return false;
     }
 
-    // Mettre à jour files.json en supprimant dossier + fichiers enfants (qui commencent par folderPath + '/')
     const filteredFiles = files.filter(
         f => !( f.path === folderPath || f.path.startsWith( folderPath + '/' ) )
     );
@@ -136,37 +130,32 @@ export const deleteFolder = async ( folderPath: string, owner: string ): Promise
     return true;
 };
 
-export const zipFolder = (folderName: string): Promise<string> =>
+export const zipFolder = ( relativeFolderPath: string ): Promise<string> =>
 {
-    return new Promise((resolve, reject) =>
+    return new Promise( async ( resolve, reject ) =>
     {
-        const sourceDir = path.resolve(__dirname, '../../data/files', folderName);
-        const outputDir = path.resolve(__dirname, '../../data/archives');
-        const outputZip = path.join(outputDir, `${folderName}.zip`);
+        const sourceDir = path.resolve( __dirname, '../../data/files', relativeFolderPath );
+        const outputDir = path.resolve( __dirname, '../../data/archives' );
+        const outputZip = path.join( outputDir, `${ path.basename( relativeFolderPath ) }.zip` );
 
-        // Vérifie si le dossier à zipper existe
-        if (!fsSync.existsSync(sourceDir))
+        try
         {
-            return reject(new Error('Dossier source introuvable'));
+            await fs.mkdir( outputDir, { recursive: true } ); // ✅ fs est déjà fs/promises
+
+            const output = fsSync.createWriteStream( outputZip ); // ✅ createWriteStream vient de fsSync
+            const archive = archiver( 'zip', { zlib: { level: 9 } } );
+
+            output.on( 'close', () => resolve( outputZip ) );
+            archive.on( 'error', err => reject( err ) );
+
+            archive.pipe( output );
+            archive.directory( sourceDir, false );
+            archive.finalize();
+
         }
-
-        // Crée le dossier de sortie s’il n’existe pas
-        if (!fsSync.existsSync(outputDir))
+        catch ( err )
         {
-            fsSync.mkdirSync(outputDir, { recursive: true });
+            reject( err );
         }
-
-        const zip = spawn('zip', ['-r', outputZip, '.'], { cwd: sourceDir });
-
-        zip.on('close', (code) =>
-        {
-            if (code === 0) resolve(outputZip);
-            else reject(new Error(`Le processus zip s'est terminé avec le code ${code}`));
-        });
-
-        zip.on('error', (err) =>
-        {
-            reject(err);
-        });
-    });
+    } );
 };
