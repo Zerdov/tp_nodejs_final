@@ -197,6 +197,9 @@
           case 'file-deleted':
             alert(`Fichier supprimé par ${data.by} : ${data.fileId}`);
             break;
+          case 'file-shared':
+            alert(`Fichier partagé par ${data.by} : ${data.fileId}`);
+            break;
           default:
             console.log('Type de message WebSocket inconnu :', data.type);
         }
